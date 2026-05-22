@@ -1,0 +1,14 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "freestylegym",
+  "compatibility_date": "2026-05-22",
+  "observability": {
+    "enabled": true
+  },
+  "assets": {
+    "directory": "freestyle_gym"
+  },
+  "compatibility_flags": [
+    "nodejs_compat"
+  ]
+}
