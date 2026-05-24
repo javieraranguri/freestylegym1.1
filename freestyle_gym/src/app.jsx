@@ -1,4 +1,4 @@
-const { useState, useEffect, useRef, useMemo, useCallback } = React;
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react'
 
 // ── STORAGE ───────────────────────────────────────────────────────────────────
 const storage = {
