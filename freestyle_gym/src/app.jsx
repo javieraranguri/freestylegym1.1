@@ -328,15 +328,17 @@ function AuthScreen({accent='#d8ff3d'}) {
 function Onboarding({onComplete,accent}) {
   const [step,setStep]=useState(0)
   const [data,setData]=useState({name:'',goal:'hipertrofia',priorities:['pecho','espalda','piernas'],frequency:4,experience:'intermedio'})
+  const TOTAL_STEPS=7
   const canNext=step===0?data.name.trim().length>0:true
-  const next=()=>{if(!canNext)return;step<5?setStep(step+1):onComplete(data)}
+  const next=()=>{if(!canNext)return;step<TOTAL_STEPS-1?setStep(step+1):onComplete(data)}
   const back=()=>setStep(Math.max(0,step-1))
+  const isLastTutorialStep=step===6
   return (
     <div style={{height:'100%',display:'flex',flexDirection:'column',background:'#000',color:'#f5f5f0'}}>
       <div style={{padding:'48px 20px 0',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
         <button onClick={back} disabled={step===0} style={{background:'transparent',border:0,color:step===0?'transparent':'rgba(245,245,240,0.5)',fontFamily:'Inter',fontSize:13,cursor:step===0?'default':'pointer',padding:0}}>← Atrás</button>
-        <div style={{display:'flex',gap:5}}>{[0,1,2,3,4,5].map(i=><div key={i} style={{width:i===step?18:6,height:6,borderRadius:3,background:i<=step?accent:'rgba(245,245,240,0.18)',transition:'all .25s'}}/>)}</div>
-        <div style={{width:50,fontFamily:'ui-monospace,monospace',fontSize:11,color:'rgba(245,245,240,0.4)',textAlign:'right'}}>{String(step+1).padStart(2,'0')}/06</div>
+        <div style={{display:'flex',gap:5}}>{Array(TOTAL_STEPS).fill(0).map((_,i)=><div key={i} style={{width:i===step?18:6,height:6,borderRadius:3,background:i<=step?accent:'rgba(245,245,240,0.18)',transition:'all .25s'}}/>)}</div>
+        <div style={{width:50,fontFamily:'ui-monospace,monospace',fontSize:11,color:'rgba(245,245,240,0.4)',textAlign:'right'}}>{String(step+1).padStart(2,'0')}/{String(TOTAL_STEPS).padStart(2,'0')}</div>
       </div>
       <div style={{flex:1,padding:'32px 24px 24px',overflow:'auto'}}>
         {step===0&&<StepName data={data} setData={setData} accent={accent}/>}
@@ -345,8 +347,9 @@ function Onboarding({onComplete,accent}) {
         {step===3&&<StepFrequency data={data} setData={setData} accent={accent}/>}
         {step===4&&<StepExperience data={data} setData={setData} accent={accent}/>}
         {step===5&&<StepPlanPreview data={data} accent={accent}/>}
+        {step===6&&<StepTutorial accent={accent}/>}
       </div>
-      <div style={{padding:'0 24px 32px'}}><Button onClick={next} accent={accent} disabled={!canNext}>{step===5?'¡Empezar!':'Continuar'}</Button></div>
+      <div style={{padding:'0 24px 32px'}}><Button onClick={next} accent={accent} disabled={!canNext}>{isLastTutorialStep?'¡Empezar!':'Continuar'}</Button></div>
     </div>
   )
 }
@@ -388,6 +391,92 @@ function StepExperience({data,setData,accent}) {
 function StepPlanPreview({data,accent}) {
   const template=SPLIT_TEMPLATES[data.frequency]||SPLIT_TEMPLATES[4]
   return (<><StepHeader eyebrow="05 — Tu rutina" title="Así queda tu plan" sub="Basado en tu objetivo y frecuencia. Podés editarlo cuando quieras."/><div style={{display:'flex',flexDirection:'column',gap:10}}>{template.map((day,i)=><div key={i} style={{background:'#0a0a0a',border:'0.5px solid #1a1a1a',borderRadius:12,padding:'14px 16px'}}><div style={{display:'flex',alignItems:'center',gap:10,marginBottom:8}}><span style={{fontFamily:'ui-monospace,monospace',fontSize:11,color:accent,fontWeight:600}}>{day.label}</span><span style={{fontFamily:'Inter',fontSize:14,fontWeight:600,color:'#f5f5f0'}}>{day.title}</span></div><div style={{display:'flex',flexDirection:'column',gap:4}}>{day.exercises.map(exId=>{const ex=getExercise(exId);return ex?<div key={exId} style={{display:'flex',justifyContent:'space-between'}}><span style={{fontFamily:'Inter',fontSize:12,color:'rgba(245,245,240,0.7)'}}>{ex.name}</span><span style={{fontFamily:'ui-monospace,monospace',fontSize:10,color:'rgba(245,245,240,0.4)'}}>{setsForGoal(data.goal)}×{repsForGoal(data.goal)}</span></div>:null})}</div></div>)}</div></>)
+}
+
+function StepTutorial({accent}) {
+  const [step,setStep]=useState(0)
+  const steps=[
+    {
+      icon:'👆',
+      title:'Tocá el ejercicio para expandirlo',
+      desc:'Cada ejercicio de tu rutina se expande al tocarlo. Ahí vas a ver las series con los campos de peso, reps y RIR.',
+      visual:(
+        <div style={{background:'#0a0a0a',border:`0.5px solid ${accent}`,borderRadius:12,padding:'14px 16px',margin:'20px 0'}}>
+          <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:12}}>
+            <MonoNum size={11} color="rgba(245,245,240,0.35)">01</MonoNum>
+            <div>
+              <div style={{fontFamily:'Inter',fontSize:15,fontWeight:600,color:'#f5f5f0'}}>Press de banca</div>
+              <div style={{fontFamily:'ui-monospace,monospace',fontSize:9,color:'rgba(245,245,240,0.5)',textTransform:'uppercase',letterSpacing:.5,marginTop:2}}>PECHO · BARRA · ÚLT 80kg</div>
+            </div>
+          </div>
+          <div style={{display:'flex',gap:6,marginBottom:6,padding:'6px 0',borderTop:'0.5px solid #141414',borderBottom:'0.5px solid #141414'}}>
+            {['SERIE','PESO (KG)','REPS','RIR',''].map((h,i)=><div key={i} style={{width:i===0||i===4?28:i===3?36:undefined,flex:i===1||i===2?1:undefined,fontFamily:'ui-monospace,monospace',fontSize:9,color:'rgba(245,245,240,0.4)',textTransform:'uppercase',letterSpacing:.5}}>{h}</div>)}
+          </div>
+          {[1,2,3].map(n=><div key={n} style={{display:'flex',gap:6,alignItems:'center',padding:'6px 0'}}>
+            <div style={{width:28}}><MonoNum size={12} color="rgba(245,245,240,0.5)">{n}</MonoNum></div>
+            <div style={{flex:1,position:'relative'}}><div style={{height:32,background:'#141414',border:'0.5px solid #1f1f1f',borderRadius:6,display:'flex',alignItems:'center',justifyContent:'center'}}><span style={{fontFamily:'ui-monospace,monospace',fontSize:13,color:'rgba(245,245,240,0.3)'}}>80</span></div><span style={{position:'absolute',right:6,top:'50%',transform:'translateY(-50%)',fontFamily:'ui-monospace,monospace',fontSize:9,color:'rgba(245,245,240,0.2)'}}>kg</span></div>
+            <div style={{flex:1,height:32,background:'#141414',border:'0.5px solid #1f1f1f',borderRadius:6,display:'flex',alignItems:'center',justifyContent:'center'}}><span style={{fontFamily:'ui-monospace,monospace',fontSize:13,color:'rgba(245,245,240,0.3)'}}>8–12</span></div>
+            <div style={{width:36,height:32,background:'#141414',border:'0.5px solid #1f1f1f',borderRadius:6,display:'flex',alignItems:'center',justifyContent:'center'}}><span style={{fontFamily:'ui-monospace,monospace',fontSize:13,color:'rgba(245,245,240,0.3)'}}>2</span></div>
+            <div style={{width:28,height:28,borderRadius:6,background:'#141414',border:'0.5px solid #1f1f1f',display:'flex',alignItems:'center',justifyContent:'center'}}><svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 5l2 2 4-5" stroke="rgba(245,245,240,0.4)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg></div>
+          </div>)}
+        </div>
+      )
+    },
+    {
+      icon:'✏️',
+      title:'Editá el peso y las reps',
+      desc:'Los valores que ves son sugeridos. Cambiá el peso y las reps según lo que estés haciendo ese día. El sistema aprende de lo que cargás.',
+      visual:(
+        <div style={{margin:'20px 0',display:'flex',flexDirection:'column',gap:10}}>
+          {[{label:'PESO (KG)',val:'82.5',hint:'Modificá el peso que usás',color:accent},{label:'REPS',val:'10',hint:'Cuántas repeticiones hiciste',color:'#f5f5f0'},{label:'RIR',val:'1',hint:'Reps In Reserve: cuántas te quedaron',color:'#f5f5f0'}].map(f=>(
+            <div key={f.label}>
+              <div style={{fontFamily:'ui-monospace,monospace',fontSize:9,color:'rgba(245,245,240,0.5)',textTransform:'uppercase',letterSpacing:.5,marginBottom:4}}>{f.label}</div>
+              <div style={{display:'flex',alignItems:'center',gap:10}}>
+                <div style={{flex:1,height:40,background:'#0a0a0a',border:`0.5px solid ${f.color}`,borderRadius:8,display:'flex',alignItems:'center',justifyContent:'center'}}><span style={{fontFamily:'ui-monospace,monospace',fontSize:16,color:f.color,fontWeight:600}}>{f.val}</span></div>
+                <div style={{flex:2,fontFamily:'Inter',fontSize:12,color:'rgba(245,245,240,0.5)',lineHeight:1.3}}>{f.hint}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )
+    },
+    {
+      icon:'✅',
+      title:'Confirmá cada serie',
+      desc:'Cuando terminás una serie, tocá el ✓ para marcarla como completa. El timer de descanso arranca automáticamente.',
+      visual:(
+        <div style={{margin:'20px 0',display:'flex',flexDirection:'column',gap:8}}>
+          {[{n:1,done:true,w:'80',r:'10',rir:'2'},{n:2,done:true,w:'80',r:'9',rir:'1'},{n:3,done:false,w:'80',r:'8–12',rir:'2'}].map(s=>(
+            <div key={s.n} style={{display:'flex',gap:6,alignItems:'center',opacity:s.done?.6:1}}>
+              <div style={{width:28}}><MonoNum size={12} color={s.done?accent:'rgba(245,245,240,0.5)'}>{s.n}</MonoNum></div>
+              <div style={{flex:1,position:'relative',height:32,background:'#141414',border:'0.5px solid #1f1f1f',borderRadius:6,display:'flex',alignItems:'center',justifyContent:'center'}}><span style={{fontFamily:'ui-monospace,monospace',fontSize:13,color:'#f5f5f0'}}>{s.w}</span><span style={{position:'absolute',right:6,fontFamily:'ui-monospace,monospace',fontSize:9,color:'rgba(245,245,240,0.3)'}}>kg</span></div>
+              <div style={{flex:1,height:32,background:'#141414',border:'0.5px solid #1f1f1f',borderRadius:6,display:'flex',alignItems:'center',justifyContent:'center'}}><span style={{fontFamily:'ui-monospace,monospace',fontSize:13,color:'#f5f5f0'}}>{s.r}</span></div>
+              <div style={{width:36,height:32,background:'#141414',border:'0.5px solid #1f1f1f',borderRadius:6,display:'flex',alignItems:'center',justifyContent:'center'}}><span style={{fontFamily:'ui-monospace,monospace',fontSize:13,color:'#f5f5f0'}}>{s.rir}</span></div>
+              <div style={{width:28,height:28,borderRadius:6,background:s.done?accent:'#141414',border:s.done?'none':'0.5px solid #1f1f1f',display:'flex',alignItems:'center',justifyContent:'center'}}>{s.done?<svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-7" stroke="#000" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>:<svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 5l2 2 4-5" stroke="rgba(245,245,240,0.4)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>}</div>
+            </div>
+          ))}
+          <div style={{marginTop:8,background:'#0a0a0a',border:`0.5px solid ${accent}`,borderRadius:10,padding:'10px 14px',display:'flex',alignItems:'center',gap:10}}>
+            <div style={{fontFamily:'Inter',fontSize:11,color:'rgba(245,245,240,0.5)',textTransform:'uppercase',letterSpacing:.8}}>Descanso</div>
+            <MonoNum size={18} color={accent}>1:28</MonoNum>
+            <div style={{marginLeft:'auto',fontFamily:'Inter',fontSize:11,color:'rgba(245,245,240,0.5)'}}>Timer automático ✓</div>
+          </div>
+        </div>
+      )
+    }
+  ]
+  const cur=steps[step]
+  return (
+    <>
+      <StepHeader eyebrow="06 — Tutorial" title={cur.title}/>
+      <div style={{fontSize:36,marginBottom:4}}>{cur.icon}</div>
+      <div style={{fontFamily:'Inter',fontSize:14,color:'rgba(245,245,240,0.6)',lineHeight:1.5}}>{cur.desc}</div>
+      {cur.visual}
+      <div style={{display:'flex',gap:8,marginTop:8}}>
+        {steps.map((_,i)=><div key={i} onClick={()=>setStep(i)} style={{flex:1,height:4,borderRadius:2,background:i===step?accent:'rgba(245,245,240,0.15)',cursor:'pointer',transition:'background .2s'}}/>)}
+      </div>
+      {step<steps.length-1&&<button onClick={()=>setStep(step+1)} style={{width:'100%',height:36,marginTop:12,background:'transparent',border:`0.5px solid ${accent}`,borderRadius:10,color:accent,fontFamily:'Inter',fontSize:13,fontWeight:500,cursor:'pointer'}}>Siguiente →</button>}
+    </>
+  )
 }
 
 // ── HOME ──────────────────────────────────────────────────────────────────────
@@ -691,6 +780,8 @@ function ExerciseCard({exercise,idx,active,onActivate,onSwap,onCompleteSet,onUpd
               <span style={{fontFamily:'ui-monospace,monospace',fontSize:9,color:'rgba(245,245,240,0.5)',textTransform:'uppercase',letterSpacing:.5}}>{ex.equipment}</span>
               {lastW!==null&&<><span style={{color:'rgba(245,245,240,0.2)'}}>·</span><span style={{fontFamily:'ui-monospace,monospace',fontSize:9,color:accent,letterSpacing:.5}}>ÚLT {lastW}kg {trend||''}</span></>}
             </div>
+            {!active&&!allDone&&<div style={{marginTop:6,display:'inline-flex',alignItems:'center',gap:4,background:'rgba(245,245,240,0.05)',border:'0.5px solid rgba(245,245,240,0.1)',borderRadius:6,padding:'3px 8px'}}><span style={{fontSize:9,color:'rgba(245,245,240,0.4)',fontFamily:'Inter',letterSpacing:.3}}>Tocá para cargar peso y reps</span><span style={{fontSize:10}}>👆</span></div>}
+            {allDone&&<div style={{marginTop:6,display:'inline-flex',alignItems:'center',gap:4,background:`rgba(${accent==='#d8ff3d'?'216,255,61':'61,214,168'},0.08)`,border:`0.5px solid ${accent}`,borderRadius:6,padding:'3px 8px'}}><span style={{fontSize:9,color:accent,fontFamily:'Inter',letterSpacing:.3,fontWeight:600}}>✓ Completado</span></div>}
           </div>
           <button onClick={e=>{e.stopPropagation();onSwap()}} style={{background:'transparent',border:0,padding:6,cursor:'pointer'}}>
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 5h9M9 2l3 3-3 3M14 11H5M7 14l-3-3 3-3" stroke="rgba(245,245,240,0.5)" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/></svg>
@@ -968,7 +1059,23 @@ export default function App() {
   // ── Start session
   const handleStartDay = (dayIdx) => {
     const template=SPLIT_TEMPLATES[profile?.frequency]||SPLIT_TEMPLATES[4]
-    setSessionState({dayTemplate:template[dayIdx],freestyle:false})
+    const day=template[dayIdx]
+    // Enrich day exercises with plan weights if available
+    const planDay=plan?.weeks?.[0]?.[dayIdx]
+    const enriched={
+      ...day,
+      exercises: day.exercises.map((exId,i)=>{
+        const planEx=planDay?.exercises?.[i]
+        return {
+          exId,
+          sets: planEx?.sets||setsForGoal(profile?.goal),
+          reps: planEx?.reps||repsForGoal(profile?.goal),
+          weight: planEx?.weight||suggestWeight(history,exId,profile),
+          rir: planEx?.rir||rirForGoal(profile?.goal),
+        }
+      })
+    }
+    setSessionState({dayTemplate:enriched,freestyle:false})
     setView('session')
   }
   const handleStartFreestyle = () => {setSessionState({freestyle:true});setView('session')}
